@@ -8,6 +8,7 @@ enum Direction {
     R, // Higher
 }
 
+#[allow(dead_code)]
 fn rotate(mut current: i32, direction: &Direction, distance: i32) -> i32 {
     current = match direction {
         Direction::L => current - distance,
@@ -15,6 +16,36 @@ fn rotate(mut current: i32, direction: &Direction, distance: i32) -> i32 {
     };
 
     return current % 100;
+}
+
+struct RotateResult {
+    current: i32,
+    total_zeros: i32,
+}
+
+fn rotate_two(mut current: i32, direction: &Direction, distance: i32) -> RotateResult {
+    let mut total_zeros = 0;
+    match direction {
+        Direction::L => {
+            for _ in 0..distance {
+                current -= 1;
+                check_and_increment_zero(current, &mut total_zeros);
+            }
+        },
+        Direction::R => {
+            for _ in 0..distance {
+                current += 1;
+                check_and_increment_zero(current, &mut total_zeros);
+            }
+        },
+    };
+    return RotateResult { current, total_zeros };
+}
+
+fn check_and_increment_zero(current: i32, total_zeros: &mut i32) {
+    if current % 100 == 0 {
+        *total_zeros += 1;
+    }
 }
 
 fn get_direction(char: char) -> &'static Direction {
@@ -40,12 +71,14 @@ fn one_one(input: String) -> i32 {
         dbg!(direction);
 
         let amount = line.get(1..).unwrap_or("0");
-        let result = rotate(current, direction, as_i32(amount));
+        let (result, zeros) = {
+            let res = rotate_two(current, direction, as_i32(amount));
+            (res.current, res.total_zeros)
+        };
+        amount_zero += zeros;
         current = result;
         dbg!(current);
-        if current == 0 {
-            amount_zero += 1;
-        }
+        dbg!(amount_zero);
     }
     return amount_zero;
 }
