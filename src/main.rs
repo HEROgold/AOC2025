@@ -11,18 +11,32 @@ fn get_range(range: &str) -> Range<i128> {
     let bounds: Vec<&str> = range.split("-").collect();
     let start: i128 = bounds[0].trim_start_matches('0').parse().unwrap();
     let end: i128 = bounds[1].trim_start_matches('0').parse().unwrap();
-    dbg!(start..end);
     return start..end
 }
 
 fn is_invalid_id(n: i128) -> bool {
     let s = n.to_string();
-    if s.len() % 2 != 0 {
-        return false;
+    let len = s.len();
+
+    // Try all possible pattern lengths that divide the total length
+    for pat_len in 1..=len / 2 {
+        if len % pat_len != 0 {
+            continue;
+        }
+
+        let pattern = &s[..pat_len];
+        if pattern
+            .repeat(len / pat_len)
+            == s
+        {
+            // Must be at least two repetitions
+            if len / pat_len >= 2 {
+                return true;
+            }
+        }
     }
-    let half = s.len() / 2;
-    let (first, last) = s.split_at(half);
-    first == last
+
+    false
 }
 
 fn sum_invalid_in_range(range: Range<i128>) -> i128 {
