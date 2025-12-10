@@ -1,94 +1,49 @@
 #![deny(warnings)]
 
-use std::{env, fmt::Debug};
+use std::ops::Range;
 
-#[derive(Debug)]
-enum Direction {
-    L, //Lower
-    R, // Higher
+use crate::input::get_input;
+
+mod input;
+
+
+fn get_range(range: &str) -> Range<i128> {
+    let bounds: Vec<&str> = range.split("-").collect();
+    let start: i128 = bounds[0].trim_start_matches('0').parse().unwrap();
+    let end: i128 = bounds[1].trim_start_matches('0').parse().unwrap();
+    dbg!(start..end);
+    return start..end
 }
 
-#[allow(dead_code)]
-fn rotate(mut current: i32, direction: &Direction, distance: i32) -> i32 {
-    current = match direction {
-        Direction::L => current - distance,
-        Direction::R => current + distance,
-    };
-
-    return current % 100;
-}
-
-struct RotateResult {
-    current: i32,
-    total_zeros: i32,
-}
-
-fn rotate_two(mut current: i32, direction: &Direction, distance: i32) -> RotateResult {
-    let mut total_zeros = 0;
-    match direction {
-        Direction::L => {
-            for _ in 0..distance {
-                current -= 1;
-                check_and_increment_zero(current, &mut total_zeros);
-            }
-        },
-        Direction::R => {
-            for _ in 0..distance {
-                current += 1;
-                check_and_increment_zero(current, &mut total_zeros);
-            }
-        },
-    };
-    return RotateResult { current, total_zeros };
-}
-
-fn check_and_increment_zero(current: i32, total_zeros: &mut i32) {
-    if current % 100 == 0 {
-        *total_zeros += 1;
+fn is_invalid_id(n: i128) -> bool {
+    let s = n.to_string();
+    if s.len() % 2 != 0 {
+        return false;
     }
+    let half = s.len() / 2;
+    let (first, last) = s.split_at(half);
+    first == last
 }
 
-fn get_direction(char: char) -> &'static Direction {
-    return match char {
-        'L' => &Direction::L,
-        'R' => &Direction::R,
-        _ => panic!("Invalid direction"),
-    };
+fn sum_invalid_in_range(range: Range<i128>) -> i128 {
+    range
+        .filter(|&n| is_invalid_id(n))
+        .sum()
 }
 
-fn as_i32(s: &str) -> i32 {
-    s.trim().parse::<i32>().unwrap()
-}
-
-fn one_one(input: String) -> i32 {
-    let mut current: i32 = 50;
-    let mut direction: &Direction;
-    let mut amount_zero: i32 = 0;
-    for line in input.lines().into_iter() {
-        let char = line.chars().next().unwrap();
-        direction = get_direction(char);
-        dbg!(char);
-        dbg!(direction);
-
-        let amount = line.get(1..).unwrap_or("0");
-        let (result, zeros) = {
-            let res = rotate_two(current, direction, as_i32(amount));
-            (res.current, res.total_zeros)
-        };
-        amount_zero += zeros;
-        current = result;
-        dbg!(current);
-        dbg!(amount_zero);
-    }
-    return amount_zero;
+fn find_invalid(range: Range<i128>) -> i128 {
+    sum_invalid_in_range(range)
 }
 
 fn main() {
-    let session = env::var("AOC_SESSION").ok();
-    let res = aoc_input_lib::get_puzzle_input(2025, 1, session);
-    let input = res.unwrap();
-    println!("{}", one_one(input));
+    let input = get_input(2025, 2);
+    let mut total = 0;
+    for line in input.lines() {
+        for number in line.split(",") {
+            let range = get_range(number);
+            let invalid = find_invalid(range);
+            total += invalid;
+        }
+    }
+    print!("Total invalid numbers: {}", total);
 }
-
-// answer format: level=1&answer=997
-// to url: https://adventofcode.com/2025/day/1/answer
